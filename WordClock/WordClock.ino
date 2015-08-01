@@ -77,7 +77,6 @@ int  hour=9, minute=30, second=00;
 static unsigned long msTick =0;  // the number of Millisecond Ticks since we last 
                                  // incremented the second counter
 int  count;
-int selftestmode;
 char Display1=0, Display2=0, Display3=0, Display4=0;
 
 // hardware constants
@@ -91,35 +90,19 @@ int PWMPin = 9;
 
 void setup()
 {
-  // initialise the hardware	
-  // initialize the appropriate pins as outputs:
+  // initialize the hardware	
   pinMode(LEDClockPin, OUTPUT); 
   pinMode(LEDDataPin, OUTPUT); 
   pinMode(LEDStrobePin, OUTPUT); 
-  
-  
-  //pinMode(BrightnessPin, INPUT);
-  pinMode(MinuteButtonPin, INPUT); 
-  pinMode(HourButtonPin, INPUT);
-  digitalWrite(MinuteButtonPin, HIGH);  //set internal pullup
-  digitalWrite(HourButtonPin, HIGH); //set internal pullup
-  
-  
   pinMode(PWMPin, OUTPUT); 
   
-  Serial.begin(19200);
+  pinMode(MinuteButtonPin, INPUT); 
+  pinMode(HourButtonPin, INPUT);
   
-  /*
-  while(true){
-    Serial.print("In: ");
-    Serial.print(analogRead(0), DEC);
-    Serial.print(", ");
-    Serial.print(digitalRead(MinuteButtonPin), DEC);
-    Serial.print(", ");
-    Serial.print(digitalRead(HourButtonPin), DEC);
-    Serial.println();
-  }
-  */
+  digitalWrite(MinuteButtonPin, HIGH);  //set internal pullup
+  digitalWrite(HourButtonPin, HIGH); //set internal pullup
+
+  Serial.begin(19200);
 
   msTick=millis();      // Initialise the msTick counter
   displaytime();        // display the current time
@@ -144,6 +127,7 @@ void WriteLEDs(void) {
 }
 
 void selftest(void){
+  //cycle through each word and display it
   Serial.print("TEST");
   analogWrite(PWMPin, 255);
   
@@ -405,6 +389,8 @@ void displaytime(void){
         break;
       }
     }
+    
+    //display individual minutes
     switch(minute % 5) {
       case 0:
         Serial.println("");
@@ -429,7 +415,8 @@ void displaytime(void){
    WriteLEDs();
 }
 
-void incrementtime(void){
+void incrementtime(void) {
+  
   // increment the time counters keeping care to rollover as required
   second=0;
   if (++minute >= 60) {
@@ -437,7 +424,8 @@ void incrementtime(void){
     if (++hour == 13) {
       hour=1;  
     }
-  }  
+  }
+  
   // debug outputs
   Serial.println();
   Serial.print(hour);
@@ -445,13 +433,12 @@ void incrementtime(void){
   Serial.print(minute);
   Serial.print(",");
   Serial.println(second);
-  
 }
 
 void loop(void)
 {
   
-  //selftest();
+  //selftest(); //uncomment to run in test mode
  
   //Uncomment the following line and comment the next one in order to
   //  enable dimming via a potentiometer connected to pin 0:
@@ -463,7 +450,7 @@ void loop(void)
     if ( millis() - msTick >999) {
         msTick=millis();
         second++;
-        // Flash the onboard Pin13 Led so we know something is hapening!
+        // Flash the onboard Pin13 Led so we know something is happening!
         digitalWrite(13,HIGH);
         delay(100);
         digitalWrite(13,LOW);    
