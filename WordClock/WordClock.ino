@@ -1,5 +1,3 @@
-
-
 /***************************************************************************
  *                                                                         *
  *  W O R D C L O C K   - A clock that tells the time using words.         *
@@ -9,6 +7,7 @@
  *                                                                         *
  *   Original Copyright (C) 2009  Doug Jackson (doug@doughq.com)           *
  *   Modifications Copyright (C) 2010 Scott Bezek (scott@bezekhome.com)    *
+ *   Modifications Copyright (C) 2015 Joshua Ruihley                       *
  *                                                                         *
  ***************************************************************************
  *                                                                         *
