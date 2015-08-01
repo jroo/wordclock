@@ -36,7 +36,6 @@
  * 20150731     jroo        added four LEDs for minute display
  */
 
-
 // Display output pin assignments
 #define MTEN 	Display1=Display1 | (1<<0)  
 #define HALF	Display1=Display1 | (1<<1)
@@ -65,13 +64,21 @@
 #define OCLOCK  Display3=Display3 | (1<<6)
 #define UNUSED3	Display3=Display3 | (1<<7)
 
+#define MIN1	Display4=Display4 | (1<<0)
+#define MIN2	Display4=Display4 | (1<<1)
+#define MIN3	Display4=Display4 | (1<<2)
+#define MIN4	Display4=Display4 | (1<<3)
+#define UNUSED4	Display4=Display4 | (1<<4)
+#define UNUSED5	Display4=Display4 | (1<<5)
+#define UNUSED6 Display4=Display4 | (1<<6)
+#define UNUSED7	Display4=Display4 | (1<<7)
+
 int  hour=9, minute=30, second=00;
 static unsigned long msTick =0;  // the number of Millisecond Ticks since we last 
                                  // incremented the second counter
 int  count;
 int selftestmode;
-char Display1=0, Display2=0, Display3=0;
-
+char Display1=0, Display2=0, Display3=0, Display4=0;
 
 // hardware constants
 int LEDClockPin=6;
@@ -81,7 +88,6 @@ int LEDStrobePin=8;
 int MinuteButtonPin=2;
 int HourButtonPin=3;
 int PWMPin = 9;
-
 
 void setup()
 {
@@ -119,25 +125,23 @@ void setup()
   displaytime();        // display the current time
 }
 
-
-
 void ledsoff(void) {
  Display1=0;
  Display2=0;
  Display3=0;
- }
+ Display4=0;
+}
 
 void WriteLEDs(void) {
  // Now we write the actual values to the hardware
+ shiftOut(LEDDataPin, LEDClockPin, MSBFIRST, Display4);
  shiftOut(LEDDataPin, LEDClockPin, MSBFIRST, Display3);
  shiftOut(LEDDataPin, LEDClockPin, MSBFIRST, Display2);
  shiftOut(LEDDataPin, LEDClockPin, MSBFIRST, Display1);
  digitalWrite(LEDStrobePin,HIGH);
  delay(2);
- digitalWrite(LEDStrobePin,LOW); 
-
-
- }
+ digitalWrite(LEDStrobePin,LOW);
+}
 
 void selftest(void){
   Serial.print("TEST");
@@ -163,9 +167,12 @@ void selftest(void){
   ledsoff(); HTEN; WriteLEDs(); delay(500); 
   ledsoff(); ELEVEN; WriteLEDs(); delay(500); 
   ledsoff(); TWELVE; WriteLEDs(); delay(500); 
-  ledsoff(); OCLOCK; WriteLEDs(); delay(500); 
+  ledsoff(); OCLOCK; WriteLEDs(); delay(500);
+  ledsoff(); MIN1; WriteLEDs(); delay(500); 
+  ledsoff(); MIN2; WriteLEDs(); delay(500); 
+  ledsoff(); MIN3; WriteLEDs(); delay(500); 
+  ledsoff(); MIN4; WriteLEDs(); delay(500);
 }
-
 
 void displaytime(void){
 
@@ -229,8 +236,6 @@ void displaytime(void){
     MINUTES; 
     Serial.print("Five Minutes ");
   }
-
-
 
   if ((minute <5))
   {
@@ -400,13 +405,29 @@ void displaytime(void){
         break;
       }
     }
-
-
-
+    switch(minute % 5) {
+      case 0:
+        Serial.println("");
+        break;
+      case 1:
+        MIN1;
+        Serial.println(".");
+        break;
+      case 2:
+        MIN2;
+        Serial.println("..");
+        break;
+      case 3:
+        MIN3;
+        Serial.println("...");
+        break;
+      case 4:
+        MIN4;
+        Serial.println("....");
+        break;
+   }
    WriteLEDs();
-   
 }
-
 
 void incrementtime(void){
   // increment the time counters keeping care to rollover as required
@@ -426,7 +447,6 @@ void incrementtime(void){
   Serial.println(second);
   
 }
-
 
 void loop(void)
 {
@@ -448,8 +468,6 @@ void loop(void)
         delay(100);
         digitalWrite(13,LOW);    
     }
-    
-    
     
     //test to see if we need to increment the time counters
     if (second==60) 
@@ -494,8 +512,4 @@ void loop(void)
       // flash doesnt happen when setting time  
       displaytime();
     }
-
-}		  
-
-
-
+}
