@@ -400,14 +400,20 @@ void displaytime(void){
         Serial.println(".");
         break;
       case 2:
+        MIN1;
         MIN2;
         Serial.println("..");
         break;
       case 3:
+        MIN1;
+        MIN2;
         MIN3;
         Serial.println("...");
         break;
       case 4:
+        MIN1;
+        MIN2;
+        MIN3;
         MIN4;
         Serial.println("....");
         break;
