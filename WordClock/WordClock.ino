@@ -42,7 +42,7 @@
 #define QUARTER	Display1=Display1 | (1<<2)
 #define TWENTY	Display1=Display1 | (1<<3)
 #define MFIVE	Display1=Display1 | (1<<4)
-#define MINUTES	Display1=Display1 | (1<<5)
+#define ITIS	Display1=Display1 | (1<<5)
 #define PAST	Display1=Display1 | (1<<6)
 #define UNUSED1	Display1=Display1 | (1<<7)
 
@@ -131,12 +131,12 @@ void selftest(void){
   Serial.print("TEST");
   analogWrite(PWMPin, 255);
   
+  ledsoff(); ITIS; WriteLEDs(); delay(500); 
   ledsoff(); MTEN; WriteLEDs(); delay(500); 
   ledsoff(); HALF; WriteLEDs(); delay(500); 
   ledsoff(); QUARTER; WriteLEDs(); delay(500); 
   ledsoff(); TWENTY; WriteLEDs(); delay(500); 
   ledsoff(); MFIVE; WriteLEDs(); delay(500); 
-  ledsoff(); MINUTES; WriteLEDs(); delay(500); 
   ledsoff(); PAST; WriteLEDs(); delay(500); 
   ledsoff(); TO; WriteLEDs(); delay(500); 
   ledsoff(); ONE; WriteLEDs(); delay(500); 
@@ -163,33 +163,30 @@ void displaytime(void){
   // start by clearing the display to a known state
   ledsoff();
   
+  ITIS;
   Serial.print("It is ");
 
   // now we display the appropriate minute counter
   if ((minute>4) && (minute<10)) { 
     MFIVE; 
-    MINUTES; 
-    Serial.print("Five Minutes ");
+    Serial.print("Five ");
   } 
   if ((minute>9) && (minute<15)) { 
     MTEN; 
-    MINUTES; 
-    Serial.print("Ten Minutes ");
+    Serial.print("Ten ");
   }
   if ((minute>14) && (minute<20)) {
     QUARTER; 
-      Serial.print("Quarter ");
+      Serial.print("A Quarter ");
   }
   if ((minute>19) && (minute<25)) { 
     TWENTY; 
-    MINUTES; 
-    Serial.print("Twenty Minutes ");
+    Serial.print("Twenty ");
   }
   if ((minute>24) && (minute<30)) { 
     TWENTY; 
     MFIVE; 
-    MINUTES;
-    Serial.print("Twenty Five Minutes ");
+    Serial.print("Twenty Five ");
   }  
   if ((minute>29) && (minute<35)) {
     HALF;
@@ -198,27 +195,23 @@ void displaytime(void){
   if ((minute>34) && (minute<40)) { 
     TWENTY; 
     MFIVE; 
-    MINUTES;
-    Serial.print("Twenty Five Minutes ");
+    Serial.print("Twenty Five ");
   }  
   if ((minute>39) && (minute<45)) { 
     TWENTY; 
-    MINUTES; 
-    Serial.print("Twenty Minutes ");
+    Serial.print("Twenty ");
   }
   if ((minute>44) && (minute<50)) {
     QUARTER; 
-    Serial.print("Quarter ");
+    Serial.print("A Quarter ");
   }
   if ((minute>49) && (minute<55)) { 
     MTEN; 
-    MINUTES; 
-    Serial.print("Ten Minutes ");
+    Serial.print("Ten ");
   } 
   if (minute>54) { 
     MFIVE; 
-    MINUTES; 
-    Serial.print("Five Minutes ");
+    Serial.print("Five ");
   }
 
   if ((minute <5))
