@@ -33,7 +33,7 @@
  *                              - based on Wordclock.c - from PIC version
  * 20100124     Scott Bezek Changed LED pinout, added brightness control,
  *                              changed buttons to hour/minute increment 
- * 20150731     jroo        added four LEDs for minute display
+ * 20150731     JR          added four LEDs for minute display
  */
 
 // Display output pin assignments
@@ -476,7 +476,6 @@ void loop(void)
       // and it has been more than one second since we
       // last looked
     {
-      minute=(((minute/5)*5) +5); 
       second=0;
       incrementtime();
       second++;  // Increment the second counter to ensure that the name
@@ -488,15 +487,6 @@ void loop(void)
     // for time setting
     if ((digitalRead(HourButtonPin)==0 ) && second!=1) 
     {
-      /*
-      minute=(((minute/5)*5) -5); 
-      second=0; // decrement the minute counter
-      if (minute<0) { 
-        minute=55; 
-        if (--hour <0) hour=12;
-      } 
-      */
-      minute = (minute/5)*5;  //round minute down to previous 5 min interval
       if (++hour == 13) {
         hour=1;  
       }
