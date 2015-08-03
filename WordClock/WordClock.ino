@@ -2,8 +2,9 @@
  *                                                                         *
  *  W O R D C L O C K   - A clock that tells the time using words.         *
  *                                                                         *
- * Hardware: Arduino Duemilanove with a set of individual LEDs under a word   *
- *            stencil.                                                     *
+ * Hardware: Arduino Duemilanove with a set of individual LEDs under a     *
+ * word stencil.                                                           *
+ *                                                                         *
  *                                                                         *
  *   Original Copyright (C) 2009  Doug Jackson (doug@doughq.com)           *
  *   Modifications Copyright (C) 2010 Scott Bezek (scott@bezekhome.com)    *
@@ -135,7 +136,7 @@ void WriteLEDs(void) {
 void selftest(void){
   //cycle through each word and display it
   Serial.print("TEST");
-  analogWrite(PWMPin, 255);
+  analogWrite(PWMPin, brightness);
   
   ledsoff(); ITIS; WriteLEDs(); delay(500); 
   ledsoff(); MTEN; WriteLEDs(); delay(500); 
@@ -162,6 +163,8 @@ void selftest(void){
   ledsoff(); MIN2; WriteLEDs(); delay(500); 
   ledsoff(); MIN3; WriteLEDs(); delay(500); 
   ledsoff(); MIN4; WriteLEDs(); delay(500);
+  
+  decreaseBrightness();
 }
 
 void displaytime(void){
