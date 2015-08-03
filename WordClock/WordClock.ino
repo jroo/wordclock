@@ -2,7 +2,7 @@
  *                                                                         *
  *  W O R D C L O C K   - A clock that tells the time using words.         *
  *                                                                         *
- * Hardware: Arduino Dumelove with a set of individual LEDs under a word   *
+ * Hardware: Arduino Duemilanove with a set of individual LEDs under a word   *
  *            stencil.                                                     *
  *                                                                         *
  *   Original Copyright (C) 2009  Doug Jackson (doug@doughq.com)           *
