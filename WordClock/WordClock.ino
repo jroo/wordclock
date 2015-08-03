@@ -501,7 +501,7 @@ void loop(void)
       if (++hour == 13) {
         hour=1;  
       }
-      incrementtime();
+      minute--; incrementtime();
       second++;  // Increment the second counter to ensure that the name
       // flash doesnt happen when setting time  
       displaytime();
