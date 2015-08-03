@@ -33,7 +33,9 @@
  *                              - based on Wordclock.c - from PIC version
  * 20100124     Scott Bezek Changed LED pinout, added brightness control,
  *                              changed buttons to hour/minute increment 
- * 20150731     JR          added four LEDs for minute display
+ * 20150802     JR          added four LEDs for minute display, changed
+ *                          brightness setting trigger to a button, added
+ *                          "IT IS" and removed "Minutes" from display.
  */
 
 // Display output pin assignments
@@ -87,6 +89,8 @@ int LEDStrobePin=8;
 int MinuteButtonPin=2;
 int HourButtonPin=3;
 int PWMPin = 9;
+int BrightnessButtonPin = 4;
+int brightness = 255;
 
 void setup()
 {
@@ -98,9 +102,11 @@ void setup()
   
   pinMode(MinuteButtonPin, INPUT); 
   pinMode(HourButtonPin, INPUT);
+  pinMode(BrightnessButtonPin, INPUT);
   
   digitalWrite(MinuteButtonPin, HIGH);  //set internal pullup
   digitalWrite(HourButtonPin, HIGH); //set internal pullup
+  digitalWrite(BrightnessButtonPin, HIGH); //set internal pullup
 
   Serial.begin(19200);
 
@@ -434,15 +440,24 @@ void incrementtime(void) {
   Serial.println(second);
 }
 
+void decreaseBrightness(void) {
+   //if brightness isn't on lowest setting, cut in half. 
+   //otherwise return to full brightness
+   if (brightness == 1) {
+     brightness = 255;
+   } else {
+     brightness = int(brightness/2);
+   }
+   analogWrite(PWMPin, brightness);
+   Serial.println("Brightness set to ");
+   Serial.println(brightness);
+ }
+
 void loop(void)
 {
   
   //selftest(); //uncomment to run in test mode
- 
-  //Uncomment the following line and comment the next one in order to
-  //  enable dimming via a potentiometer connected to pin 0:
-  //analogWrite(PWMPin, analogRead(0)/4);
-  analogWrite(PWMPin, 255);
+  analogWrite(PWMPin, brightness);
   
     // heart of the timer - keep looking at the millisecond timer on the Arduino
     // and increment the seconds counter every 1000 ms
@@ -484,6 +499,18 @@ void loop(void)
         hour=1;  
       }
       incrementtime();
+      second++;  // Increment the second counter to ensure that the name
+      // flash doesnt happen when setting time  
+      displaytime();
+    }
+    
+    // test to see if the back button is being held down
+    // for time setting
+    if ((digitalRead(BrightnessButtonPin)==0 ) && second!=1) 
+    {
+      second--;
+      minute--; incrementtime();
+      decreaseBrightness();
       second++;  // Increment the second counter to ensure that the name
       // flash doesnt happen when setting time  
       displaytime();
