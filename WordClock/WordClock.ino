@@ -88,9 +88,14 @@ int LEDDataPin=7;
 int LEDStrobePin=8;
 
 int MinuteButtonPin=2;
+int minuteButtonDown = 0;
+
 int HourButtonPin=3;
+int hourButtonDown = 0;
 int PWMPin = 9;
+
 int BrightnessButtonPin = 4;
+int brightnessButtonDown = 0;
 int brightness = 255;
 
 void setup()
@@ -479,43 +484,40 @@ void loop(void)
       incrementtime();
       displaytime();
     }
-
-    // test to see if a forward button is being held down
-    // for time setting
-    if ( (digitalRead(MinuteButtonPin) ==0 ) && second!=1) 
-      // the forward button is down
-      // and it has been more than one second since we
-      // last looked
-    {
-      second=0;
-      incrementtime();
-      second++;  // Increment the second counter to ensure that the name
-      // flash doesnt happen when setting time
-      displaytime();
+    
+    //hour button
+    if (digitalRead(HourButtonPin) == 0) {
+      hourButtonDown = 1;
     }
-
-    // test to see if the back button is being held down
-    // for time setting
-    if ((digitalRead(HourButtonPin)==0 ) && second!=1) 
-    {
+    if (digitalRead(HourButtonPin) == 1 && hourButtonDown == 1) {
+      hourButtonDown = 0;
+      Serial.println("Hour button released");
       if (++hour == 13) {
         hour=1;  
       }
-      minute--; incrementtime();
-      second++;  // Increment the second counter to ensure that the name
-      // flash doesnt happen when setting time  
       displaytime();
     }
     
-    // test to see if the back button is being held down
-    // for time setting
-    if ((digitalRead(BrightnessButtonPin)==0 ) && second!=1) 
-    {
-      second--;
-      minute--; incrementtime();
+    //minute button
+    if (digitalRead(MinuteButtonPin) == 0) {
+      minuteButtonDown = 1;
+    }
+    if (digitalRead(MinuteButtonPin) == 1 && minuteButtonDown == 1) {
+      minuteButtonDown = 0;
+      Serial.println("Minute button released");
+      incrementtime();
+      displaytime();
+    }
+    
+    //brightness button
+    if (digitalRead(BrightnessButtonPin) == 0) {
+      brightnessButtonDown = 1;
+    }
+    if (digitalRead(BrightnessButtonPin) == 1 && brightnessButtonDown == 1) {
+      brightnessButtonDown = 0;
+      Serial.println("Brightness button released");
       decreaseBrightness();
-      second++;  // Increment the second counter to ensure that the name
-      // flash doesnt happen when setting time  
       displaytime();
     }
 }
+
