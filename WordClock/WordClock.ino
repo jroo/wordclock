@@ -98,6 +98,10 @@ int BrightnessButtonPin = 4;
 int brightnessButtonDown = 0;
 int brightness = 255;
 
+int pushStart = 0;
+int longPressDelay = 400; //time in millisecnods considered to be a long press of a button
+int inLongPress = 0; //true if long press is happening
+
 void setup()
 {
   // initialize the hardware	
@@ -460,6 +464,90 @@ void decreaseBrightness(void) {
    Serial.println("Brightness set to ");
    Serial.println(brightness);
  }
+ 
+void checkHourButton() {
+  
+   //set hours based on hour button behavior
+   
+    if (digitalRead(HourButtonPin) == 0 && hourButtonDown == 0) {
+      //hour button pushed
+      hourButtonDown = 1; //hour button is being pressed
+      pushStart = millis(); //remember time that button was first pressed
+    }
+    
+    if (digitalRead(HourButtonPin) == 1 && hourButtonDown == 1) {
+      //hour button released: if released from a long press, do nothing.
+      //if released from a 'short' press, increase the hour.
+      
+      if (!inLongPress) {
+        if (++hour == 13) {
+          hour=1;  
+        }
+        displaytime();
+      }
+
+      //reset button status
+      hourButtonDown = 0; //indicate that hour button is no longer pressed
+      inLongPress = 0; //indicate that button is no longer in a long press
+
+    }
+    
+    if (hourButtonDown && ((millis() - pushStart) > longPressDelay)) {
+      //if hour button is in a long press, increase hour every 200ms
+      inLongPress = 1;
+      if(millis() % 200 == 0) {
+        if (++hour == 13) {
+          hour=1;  
+        }
+        displaytime();
+      }
+    }
+}
+
+void checkMinuteButton() {
+  
+  //set minutes based on minute button behavior
+  
+  if (digitalRead(MinuteButtonPin) == 0 && minuteButtonDown == 0) {
+    //minute button pushed
+    minuteButtonDown = 1; //minute button is being pressed
+    pushStart = millis(); //mark time that button was pushed
+  }
+  
+  if (digitalRead(MinuteButtonPin) == 1 && minuteButtonDown == 1) {
+    //minute button released
+    if (!inLongPress) {
+      incrementtime();
+      displaytime();
+    }
+
+    //reset button status
+    minuteButtonDown = 0; //minute button is no longer being pressed
+    inLongPress = 0; //minute button is no longer in a long press
+  }
+  
+  if (minuteButtonDown && ((millis() - pushStart) > longPressDelay)) {
+    //if minute button is in a long press, increase minute every 200ms
+    inLongPress = 1;
+    if (millis() % 200 == 0) {
+      incrementtime();
+      displaytime();
+    }
+  }  
+}
+
+void checkBrightnessButton() {
+  //set brightness based on brightness button behavior
+  if (digitalRead(BrightnessButtonPin) == 0) {
+    brightnessButtonDown = 1;
+  }
+  if (digitalRead(BrightnessButtonPin) == 1 && brightnessButtonDown == 1) {
+    brightnessButtonDown = 0;
+    Serial.println("Brightness button released");
+    decreaseBrightness();
+    displaytime();
+  }
+}
 
 void loop(void)
 {
@@ -485,39 +573,9 @@ void loop(void)
       displaytime();
     }
     
-    //hour button
-    if (digitalRead(HourButtonPin) == 0) {
-      hourButtonDown = 1;
-    }
-    if (digitalRead(HourButtonPin) == 1 && hourButtonDown == 1) {
-      hourButtonDown = 0;
-      Serial.println("Hour button released");
-      if (++hour == 13) {
-        hour=1;  
-      }
-      displaytime();
-    }
-    
-    //minute button
-    if (digitalRead(MinuteButtonPin) == 0) {
-      minuteButtonDown = 1;
-    }
-    if (digitalRead(MinuteButtonPin) == 1 && minuteButtonDown == 1) {
-      minuteButtonDown = 0;
-      Serial.println("Minute button released");
-      incrementtime();
-      displaytime();
-    }
-    
-    //brightness button
-    if (digitalRead(BrightnessButtonPin) == 0) {
-      brightnessButtonDown = 1;
-    }
-    if (digitalRead(BrightnessButtonPin) == 1 && brightnessButtonDown == 1) {
-      brightnessButtonDown = 0;
-      Serial.println("Brightness button released");
-      decreaseBrightness();
-      displaytime();
-    }
+    //check to see if buttons are being pressed
+    checkHourButton();
+    checkMinuteButton();
+    checkBrightnessButton();
 }
 
