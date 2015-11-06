@@ -38,6 +38,10 @@
  *                          brightness setting trigger to a button, added
  *                          "IT IS" and removed "Minutes" from display.
  */
+ 
+#include <Time.h>  
+#include <Wire.h>  
+#include <DS1307RTC.h> 
 
 // Display output pin assignments
 #define MTEN 	Display1=Display1 | (1<<0)  
@@ -76,10 +80,8 @@
 #define UNUSED6 Display4=Display4 | (1<<6)
 #define UNUSED7	Display4=Display4 | (1<<7)
 
-int  hour=9, minute=30, second=00;
 static unsigned long msTick =0;  // the number of Millisecond Ticks since we last 
                                  // incremented the second counter
-int  count;
 char Display1=0, Display2=0, Display3=0, Display4=0;
 
 // hardware constants
@@ -87,11 +89,12 @@ int LEDClockPin=6;
 int LEDDataPin=7;
 int LEDStrobePin=8;
 
+int HourButtonPin=3;
+int hourButtonDown = 0;
+
 int MinuteButtonPin=2;
 int minuteButtonDown = 0;
 
-int HourButtonPin=3;
-int hourButtonDown = 0;
 int PWMPin = 9;
 
 int BrightnessButtonPin = 4;
@@ -101,6 +104,9 @@ int brightness = 255;
 int pushStart = 0;
 int longPressDelay = 400; //time in millisecnods considered to be a long press of a button
 int inLongPress = 0; //true if long press is happening
+
+time_t t;
+
 
 void setup()
 {
@@ -118,10 +124,41 @@ void setup()
   digitalWrite(HourButtonPin, HIGH); //set internal pullup
   digitalWrite(BrightnessButtonPin, HIGH); //set internal pullup
 
-  Serial.begin(19200);
-
+  //initialize system time from rtc
+  Serial.begin(9600);
+  Serial.println("getting time from RTC");
+  setTime(RTC.get());   // the function to get the time from the RTC
+  Serial.println("moving on");
   msTick=millis();      // Initialise the msTick counter
   displaytime();        // display the current time
+}
+
+void loop(void)
+{  
+  //selftest(); //uncomment to run in test mode
+  analogWrite(PWMPin, brightness);
+  
+    // heart of the timer - keep looking at the millisecond timer on the Arduino
+    // and increment the seconds counter every 1000 ms
+    if ( millis() - msTick >999) {
+        msTick=millis();
+        // Flash the onboard Pin13 Led so we know something is happening!
+        digitalWrite(13,HIGH);
+        delay(100);
+        digitalWrite(13,LOW);    
+    }
+    
+    //test to see if we need to increment the time counters
+    if (second()==0) 
+    {
+      displaytime();
+      delay(1000);
+    }
+    
+    //check to see if buttons are being pressed
+    checkHourButton();
+    checkMinuteButton();
+    checkBrightnessButton();
 }
 
 void ledsoff(void) {
@@ -145,39 +182,104 @@ void WriteLEDs(void) {
 void selftest(void){
   //cycle through each word and display it
   Serial.print("TEST");
-  analogWrite(PWMPin, brightness);
+  analogWrite(PWMPin, 32);
   
-  ledsoff(); ITIS; WriteLEDs(); delay(500); 
-  ledsoff(); MTEN; WriteLEDs(); delay(500); 
-  ledsoff(); HALF; WriteLEDs(); delay(500); 
-  ledsoff(); QUARTER; WriteLEDs(); delay(500); 
-  ledsoff(); TWENTY; WriteLEDs(); delay(500); 
-  ledsoff(); MFIVE; WriteLEDs(); delay(500); 
-  ledsoff(); PAST; WriteLEDs(); delay(500); 
-  ledsoff(); TO; WriteLEDs(); delay(500); 
-  ledsoff(); ONE; WriteLEDs(); delay(500); 
-  ledsoff(); TWO; WriteLEDs(); delay(500); 
-  ledsoff(); THREE; WriteLEDs(); delay(500); 
-  ledsoff(); FOUR; WriteLEDs(); delay(500); 
-  ledsoff(); HFIVE; WriteLEDs(); delay(500); 
-  ledsoff(); SIX; WriteLEDs(); delay(500); 
-  ledsoff(); SEVEN; WriteLEDs(); delay(500); 
-  ledsoff(); EIGHT; WriteLEDs(); delay(500); 
-  ledsoff(); NINE; WriteLEDs(); delay(500); 
-  ledsoff(); HTEN; WriteLEDs(); delay(500); 
-  ledsoff(); ELEVEN; WriteLEDs(); delay(500); 
-  ledsoff(); TWELVE; WriteLEDs(); delay(500); 
-  ledsoff(); OCLOCK; WriteLEDs(); delay(500);
-  ledsoff(); MIN1; WriteLEDs(); delay(500); 
-  ledsoff(); MIN2; WriteLEDs(); delay(500); 
-  ledsoff(); MIN3; WriteLEDs(); delay(500); 
-  ledsoff(); MIN4; WriteLEDs(); delay(500);
+  ledsoff(); ITIS; MTEN; HALF; QUARTER; TWENTY; MFIVE; PAST; TO; ONE; TWO; THREE; FOUR; HFIVE; SIX; SEVEN; EIGHT; NINE; HTEN; ELEVEN; TWELVE; OCLOCK; MIN1; MIN2; MIN3; MIN4; WriteLEDs(); delay(2000); 
   
-  decreaseBrightness();
+  ledsoff(); ITIS; WriteLEDs(); delay(1000); 
+  ledsoff(); MTEN; WriteLEDs(); delay(1000); 
+  ledsoff(); HALF; WriteLEDs(); delay(1000); 
+  ledsoff(); QUARTER; WriteLEDs(); delay(1000); 
+  ledsoff(); TWENTY; WriteLEDs(); delay(1000); 
+  ledsoff(); MFIVE; WriteLEDs(); delay(1000); 
+  ledsoff(); PAST; WriteLEDs(); delay(1000); 
+  ledsoff(); TO; WriteLEDs(); delay(1000); 
+  ledsoff(); ONE; WriteLEDs(); delay(1000); 
+  ledsoff(); TWO; WriteLEDs(); delay(1000); 
+  ledsoff(); THREE; WriteLEDs(); delay(1000); 
+  ledsoff(); FOUR; WriteLEDs(); delay(1000); 
+  ledsoff(); HFIVE; WriteLEDs(); delay(1000); 
+  ledsoff(); SIX; WriteLEDs(); delay(1000); 
+  ledsoff(); SEVEN; WriteLEDs(); delay(1000); 
+  ledsoff(); EIGHT; WriteLEDs(); delay(1000); 
+  ledsoff(); NINE; WriteLEDs(); delay(1000); 
+  ledsoff(); HTEN; WriteLEDs(); delay(1000); 
+  ledsoff(); ELEVEN; WriteLEDs(); delay(1000); 
+  ledsoff(); TWELVE; WriteLEDs(); delay(1000); 
+  ledsoff(); OCLOCK; WriteLEDs(); delay(1000);
+  ledsoff(); MIN1; WriteLEDs(); delay(1000); 
+  ledsoff(); MIN2; WriteLEDs(); delay(1000); 
+  ledsoff(); MIN3; WriteLEDs(); delay(1000); 
+  ledsoff(); MIN4; WriteLEDs(); delay(1000);
+
+  ledsoff(); MIN1; WriteLEDs(); Serial.println("MIN1"); delay(1000); 
+  ledsoff(); MIN2; WriteLEDs(); Serial.println("MIN2"); delay(1000); 
+  ledsoff(); MIN3; WriteLEDs(); Serial.println("MIN3"); delay(1000); 
+  ledsoff(); MIN4; WriteLEDs(); Serial.println("MIN4"); delay(1000);
+  ledsoff(); delay(1000);
+ }
+
+void displayHour(int offset) {
+      switch (hourFormat12()+offset) {
+        case 1: 
+          ONE; 
+          Serial.println("One ");
+          break;
+        case 2: 
+          TWO; 
+          Serial.println("Two ");
+          break;
+        case 3: 
+          THREE; 
+          Serial.println("Three ");
+          break;
+        case 4: 
+          FOUR; 
+          Serial.println("Four ");
+          break;
+        case 5: 
+          HFIVE; 
+          Serial.println("Five ");
+          break;
+        case 6: 
+          SIX; 
+          Serial.println("Six ");
+          break;
+        case 7: 
+          SEVEN; 
+          Serial.println("Seven ");
+          break;
+        case 8: 
+          EIGHT; 
+          Serial.println("Eight ");
+          break;
+        case 9: 
+          NINE; 
+          Serial.println("Nine ");
+          break;
+        case 10: 
+          HTEN; 
+          Serial.println("Ten ");
+          break;
+        case 11: 
+          ELEVEN; 
+          Serial.println("Eleven ");
+          break;
+        case 12: 
+          TWELVE; 
+          Serial.println("Twelve ");
+          break;
+         case 13:
+          ONE;
+          Serial.println("One ");
+          break;
+    }
 }
 
 void displaytime(void){
 
+  digitalClockDisplay();
+  
   // start by clearing the display to a known state
   ledsoff();
   
@@ -185,163 +287,65 @@ void displaytime(void){
   Serial.print("It is ");
 
   // now we display the appropriate minute counter
-  if ((minute>4) && (minute<10)) { 
+  if ((minute()>4) && (minute()<10)) { 
     MFIVE; 
     Serial.print("Five ");
   } 
-  if ((minute>9) && (minute<15)) { 
+  if ((minute()>9) && (minute()<15)) { 
     MTEN; 
     Serial.print("Ten ");
   }
-  if ((minute>14) && (minute<20)) {
+  if ((minute()>14) && (minute()<20)) {
     QUARTER; 
       Serial.print("A Quarter ");
   }
-  if ((minute>19) && (minute<25)) { 
+  if ((minute()>19) && (minute()<25)) { 
     TWENTY; 
     Serial.print("Twenty ");
   }
-  if ((minute>24) && (minute<30)) { 
+  if ((minute()>24) && (minute()<30)) { 
     TWENTY; 
     MFIVE; 
     Serial.print("Twenty Five ");
   }  
-  if ((minute>29) && (minute<35)) {
+  if ((minute()>29) && (minute()<35)) {
     HALF;
     Serial.print("Half ");
   }
-  if ((minute>34) && (minute<40)) { 
+  if ((minute()>34) && (minute()<40)) { 
     TWENTY; 
     MFIVE; 
     Serial.print("Twenty Five ");
   }  
-  if ((minute>39) && (minute<45)) { 
+  if ((minute()>39) && (minute()<45)) { 
     TWENTY; 
     Serial.print("Twenty ");
   }
-  if ((minute>44) && (minute<50)) {
+  if ((minute()>44) && (minute()<50)) {
     QUARTER; 
     Serial.print("A Quarter ");
   }
-  if ((minute>49) && (minute<55)) { 
+  if ((minute()>49) && (minute()<55)) { 
     MTEN; 
     Serial.print("Ten ");
   } 
-  if (minute>54) { 
+  if (minute()>54) { 
     MFIVE; 
     Serial.print("Five ");
   }
 
-  if ((minute <5))
+  if ((minute()<5))
   {
-    switch (hour) {
-    case 1: 
-      ONE; 
-      Serial.print("One ");
-      break;
-    case 2: 
-      TWO; 
-      Serial.print("Two ");
-      break;
-    case 3: 
-      THREE; 
-      Serial.print("Three ");
-      break;
-    case 4: 
-      FOUR; 
-      Serial.print("Four ");
-      break;
-    case 5: 
-      HFIVE; 
-      Serial.print("Five ");
-      break;
-    case 6: 
-      SIX; 
-      Serial.print("Six ");
-      break;
-    case 7: 
-      SEVEN; 
-      Serial.print("Seven ");
-      break;
-    case 8: 
-      EIGHT; 
-      Serial.print("Eight ");
-      break;
-    case 9: 
-      NINE; 
-      Serial.print("Nine ");
-      break;
-    case 10: 
-      HTEN; 
-      Serial.print("Ten ");
-      break;
-    case 11: 
-      ELEVEN; 
-      Serial.print("Eleven ");
-      break;
-    case 12: 
-      TWELVE; 
-      Serial.print("Twelve ");
-      break;
-    }
-  OCLOCK;
-  Serial.println("O'Clock");
+    displayHour(0);
+    OCLOCK;
+    Serial.println("O'Clock");
   }
   else
-    if ((minute < 35) && (minute >4))
+    if ((minute() < 35) && (minute() >4))
     {
       PAST;
       Serial.print("Past ");
-      switch (hour) {
-    case 1: 
-      ONE; 
-      Serial.println("One ");
-      break;
-    case 2: 
-      TWO; 
-      Serial.println("Two ");
-      break;
-    case 3: 
-      THREE; 
-      Serial.println("Three ");
-      break;
-    case 4: 
-      FOUR; 
-      Serial.println("Four ");
-      break;
-    case 5: 
-      HFIVE; 
-      Serial.println("Five ");
-      break;
-    case 6: 
-      SIX; 
-      Serial.println("Six ");
-      break;
-    case 7: 
-      SEVEN; 
-      Serial.println("Seven ");
-      break;
-    case 8: 
-      EIGHT; 
-      Serial.println("Eight ");
-      break;
-    case 9: 
-      NINE; 
-      Serial.println("Nine ");
-      break;
-    case 10: 
-      HTEN; 
-      Serial.println("Ten ");
-      break;
-    case 11: 
-      ELEVEN; 
-      Serial.println("Eleven ");
-      break;
-    case 12: 
-      TWELVE; 
-      Serial.println("Twelve ");
-      break;
-      }
+      displayHour(0);
     }
     else
     {
@@ -349,60 +353,11 @@ void displaytime(void){
       // the next hour, as we will be displaying a 'to' sign
       TO;
       Serial.print("To ");
-      switch (hour) {
-      case 1: 
-        TWO; 
-       Serial.println("Two ");
-       break;
-      case 2: 
-        THREE; 
-      Serial.println("Three ");
-        break;
-      case 3: 
-        FOUR; 
-      Serial.println("Four ");
-        break;
-      case 4: 
-        HFIVE; 
-      Serial.println("Five ");
-        break;
-      case 5: 
-        SIX; 
-      Serial.println("Six ");
-        break;
-      case 6: 
-        SEVEN; 
-      Serial.println("Seven ");
-        break;
-      case 7: 
-        EIGHT; 
-      Serial.println("Eight ");
-        break;
-      case 8: 
-        NINE; 
-      Serial.println("Nine ");
-        break;
-      case 9: 
-        HTEN; 
-      Serial.println("Ten ");
-        break;
-      case 10: 
-        ELEVEN; 
-      Serial.println("Eleven ");
-        break;
-      case 11: 
-        TWELVE; 
-      Serial.println("Twelve ");
-        break;
-      case 12: 
-        ONE; 
-      Serial.println("One ");
-        break;
-      }
+      displayHour(1);
     }
     
     //display individual minutes
-    switch(minute % 5) {
+    switch(minute() % 5) {
       case 0:
         Serial.println("");
         break;
@@ -432,25 +387,6 @@ void displaytime(void){
    WriteLEDs();
 }
 
-void incrementtime(void) {
-  
-  // increment the time counters keeping care to rollover as required
-  second=0;
-  if (++minute >= 60) {
-    minute=0;
-    if (++hour == 13) {
-      hour=1;  
-    }
-  }
-  
-  // debug outputs
-  Serial.println();
-  Serial.print(hour);
-  Serial.print(",");
-  Serial.print(minute);
-  Serial.print(",");
-  Serial.println(second);
-}
 
 void decreaseBrightness(void) {
    //if brightness isn't on lowest setting, cut in half. 
@@ -466,7 +402,6 @@ void decreaseBrightness(void) {
  }
  
 void checkHourButton() {
-  
    //set hours based on hour button behavior
    
     if (digitalRead(HourButtonPin) == 0 && hourButtonDown == 0) {
@@ -478,27 +413,22 @@ void checkHourButton() {
     if (digitalRead(HourButtonPin) == 1 && hourButtonDown == 1) {
       //hour button released: if released from a long press, do nothing.
       //if released from a 'short' press, increase the hour.
-      
       if (!inLongPress) {
-        if (++hour == 13) {
-          hour=1;  
-        }
+        adjustTime(3600);
+        RTC.set(now());
         displaytime();
       }
-
       //reset button status
       hourButtonDown = 0; //indicate that hour button is no longer pressed
       inLongPress = 0; //indicate that button is no longer in a long press
-
     }
     
     if (hourButtonDown && ((millis() - pushStart) > longPressDelay)) {
       //if hour button is in a long press, increase hour every 200ms
       inLongPress = 1;
-      if(millis() % 200 == 0) {
-        if (++hour == 13) {
-          hour=1;  
-        }
+      if (millis() % 200 == 0) {
+        adjustTime(3600);
+        RTC.set(now());
         displaytime();
       }
     }
@@ -517,7 +447,8 @@ void checkMinuteButton() {
   if (digitalRead(MinuteButtonPin) == 1 && minuteButtonDown == 1) {
     //minute button released
     if (!inLongPress) {
-      incrementtime();
+      adjustTime(60);
+      RTC.set(now());
       displaytime();
     }
 
@@ -530,7 +461,8 @@ void checkMinuteButton() {
     //if minute button is in a long press, increase minute every 200ms
     inLongPress = 1;
     if (millis() % 200 == 0) {
-      incrementtime();
+      adjustTime(60);
+      RTC.set(now());
       displaytime();
     }
   }  
@@ -549,33 +481,25 @@ void checkBrightnessButton() {
   }
 }
 
-void loop(void)
-{
-  
-  //selftest(); //uncomment to run in test mode
-  analogWrite(PWMPin, brightness);
-  
-    // heart of the timer - keep looking at the millisecond timer on the Arduino
-    // and increment the seconds counter every 1000 ms
-    if ( millis() - msTick >999) {
-        msTick=millis();
-        second++;
-        // Flash the onboard Pin13 Led so we know something is happening!
-        digitalWrite(13,HIGH);
-        delay(100);
-        digitalWrite(13,LOW);    
-    }
-    
-    //test to see if we need to increment the time counters
-    if (second==60) 
-    {
-      incrementtime();
-      displaytime();
-    }
-    
-    //check to see if buttons are being pressed
-    checkHourButton();
-    checkMinuteButton();
-    checkBrightnessButton();
+void digitalClockDisplay(){
+  // digital clock display of the time
+  Serial.print(hour());
+  printDigits(minute());
+  printDigits(second());
+  Serial.print(" ");
+  Serial.print(day());
+  Serial.print(" ");
+  Serial.print(month());
+  Serial.print(" ");
+  Serial.print(year()); 
+  Serial.println(); 
+}
+
+void printDigits(int digits){
+  // utility function for digital clock display: prints preceding colon and leading 0
+  Serial.print(":");
+  if(digits < 10)
+    Serial.print('0');
+  Serial.print(digits);
 }
 
